@@ -431,6 +431,15 @@ resource "aws_launch_template" "Pro-jenkins" {
   name_prefix   = "Pro"
   image_id      = "ami-0b6d9d3d33ba97d99"
   instance_type = "t2.micro"
+  block_device_mappings {
+  device_name = "/dev/sda1"
+
+  ebs {
+    volume_size           = 20
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+}
 
   network_interfaces {
     associate_public_ip_address = true
