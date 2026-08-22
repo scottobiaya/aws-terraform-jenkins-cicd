@@ -3,12 +3,6 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/scottobiaya/new-project.git'
-            }
-        }
-
         stage('Terraform Init') {
             steps {
                 sh 'terraform init'
