@@ -8,9 +8,9 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_subnet" "sub1" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-east-1a"
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
 
   tags = {
@@ -19,9 +19,9 @@ resource "aws_subnet" "sub1" {
 }
 
 resource "aws_subnet" "sub2" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "us-east-1b"
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "us-east-1b"
   map_public_ip_on_launch = true
 
   tags = {
@@ -99,7 +99,7 @@ resource "aws_lb_target_group" "tg" {
     protocol = "HTTP"
     path     = "/"
     port     = "traffic-port"
-    
+
   }
 
 }
@@ -161,7 +161,7 @@ resource "aws_launch_template" "Pro-ec2" {
     ]
   }
 
- user_data = base64encode(<<-EOF
+  user_data = base64encode(<<-EOF
   #!/bin/bash
   set -e
 
@@ -185,7 +185,7 @@ resource "aws_launch_template" "Pro-ec2" {
     -p 80:80 \
     nginx
 EOF
-)
+  )
 
   key_name = var.key-pair
 
@@ -242,6 +242,11 @@ resource "aws_iam_role" "jenkins-role" {
   tags = {
     tag-key = "Pro-Jenkins"
   }
+}
+
+resource "aws_iam_role_policy_attachment" "jenkins_admin" {
+  role       = aws_iam_role.jenkins-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
 
@@ -320,8 +325,8 @@ resource "aws_iam_role_policy" "ec2-policy" {
 }
 
 #resource "aws_iam_role_policy_attachment" "ssm" {
- # role       = aws_iam_role.ec2-role.name
-  #policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+# role       = aws_iam_role.ec2-role.name
+#policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 #}
 
 resource "aws_iam_instance_profile" "ec2-profile" {
@@ -343,11 +348,11 @@ resource "aws_security_group" "LB-sg" {
   }
 
   ingress {
-  from_port   = 8080
-  to_port     = 8080
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
-}
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
 
   egress {
@@ -403,9 +408,9 @@ resource "aws_security_group" "jenkins-sg" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
     security_groups = [aws_security_group.LB-sg.id]
 
   }
@@ -564,7 +569,7 @@ resource "aws_autoscaling_group" "jenkins" {
 }
 
 
- resource "aws_iam_role_policy_attachment" "jenkins_ssm" {
+resource "aws_iam_role_policy_attachment" "jenkins_ssm" {
   role       = aws_iam_role.jenkins-role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
