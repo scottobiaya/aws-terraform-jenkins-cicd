@@ -324,10 +324,10 @@ resource "aws_iam_role_policy" "ec2-policy" {
   })
 }
 
-#resource "aws_iam_role_policy_attachment" "ssm" {
-# role       = aws_iam_role.ec2-role.name
-#policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-#}
+resource "aws_iam_role_policy_attachment" "ssm" {
+role       = aws_iam_role.ec2-role.name
+policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
 
 resource "aws_iam_instance_profile" "ec2-profile" {
   name = "test_profile"
@@ -518,10 +518,7 @@ resource "aws_launch_template" "Pro-jenkins" {
     echo "Starting Jenkins..."
     systemctl start jenkins
 
-    echo "Restarting Jenkins..."
-    systemctl restart jenkins
-
-    echo "Checking installations..."
+       echo "Checking installations..."
     echo "===== Terraform ====="
     terraform version
 
