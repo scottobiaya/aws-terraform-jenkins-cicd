@@ -220,64 +220,64 @@ resource "aws_autoscaling_group" "bar" {
   }
 }
 
-resource "aws_iam_role" "jenkins-role" {
-  name = "jenkins_role"
+# resource "aws_iam_role" "jenkins-role" {
+#   name = "jenkins_role"
 
-  # Terraform's "jsonencode" function converts a
-  # Terraform expression result to valid JSON syntax.
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      },
-    ]
-  })
+#   # Terraform's "jsonencode" function converts a
+#   # Terraform expression result to valid JSON syntax.
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = "sts:AssumeRole"
+#         Effect = "Allow"
+#         Sid    = ""
+#         Principal = {
+#           Service = "ec2.amazonaws.com"
+#         }
+#       },
+#     ]
+#   })
 
-  tags = {
-    tag-key = "Pro-Jenkins"
-  }
-}
+#   tags = {
+#     tag-key = "Pro-Jenkins"
+#   }
+# }
 
-resource "aws_iam_role_policy_attachment" "jenkins_admin" {
-  role       = aws_iam_role.jenkins-role.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}
+# resource "aws_iam_role_policy_attachment" "jenkins_admin" {
+#   role       = aws_iam_role.jenkins-role.name
+#   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+# }
 
 
-resource "aws_iam_role_policy" "jenkins_ssm" {
-  name = "jenkins-ssm-policy"
-  role = aws_iam_role.jenkins-role.id
+# resource "aws_iam_role_policy" "jenkins_ssm" {
+#   name = "jenkins-ssm-policy"
+#   role = aws_iam_role.jenkins-role.id
 
-  policy = jsonencode({
-    Version = "2012-10-17"
+#   policy = jsonencode({
+#     Version = "2012-10-17"
 
-    Statement = [
-      {
-        Effect = "Allow"
+#     Statement = [
+#       {
+#         Effect = "Allow"
 
-        Action = [
-          "ssm:SendCommand",
-          "ssm:GetCommandInvocation",
-          "ssm:ListCommandInvocations",
-          "ssm:DescribeInstanceInformation"
-        ]
+#         Action = [
+#           "ssm:SendCommand",
+#           "ssm:GetCommandInvocation",
+#           "ssm:ListCommandInvocations",
+#           "ssm:DescribeInstanceInformation"
+#         ]
 
-        Resource = "*"
-      }
-    ]
-  })
-}
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
 
-resource "aws_iam_instance_profile" "jenkins_profile" {
-  name = "jenkin_profile"
-  role = aws_iam_role.jenkins-role.name
-}
+# resource "aws_iam_instance_profile" "jenkins_profile" {
+#   name = "jenkin_profile"
+#   role = aws_iam_role.jenkins-role.name
+# }
 
 
 resource "aws_iam_role" "ec2-role" {
