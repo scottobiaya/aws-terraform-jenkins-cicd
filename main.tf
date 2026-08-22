@@ -319,10 +319,10 @@ resource "aws_iam_role_policy" "ec2-policy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "ssm" {
-  role       = aws_iam_role.ec2-role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
+#resource "aws_iam_role_policy_attachment" "ssm" {
+ # role       = aws_iam_role.ec2-role.name
+  #policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+#}
 
 resource "aws_iam_instance_profile" "ec2-profile" {
   name = "test_profile"
@@ -429,19 +429,21 @@ resource "aws_security_group" "jenkins-sg" {
   }
 }
 
+
 resource "aws_launch_template" "Pro-jenkins" {
-  name_prefix   = "Pro"
+  name_prefix   = "Pro-jenkins-"
   image_id      = "ami-0b6d9d3d33ba97d99"
   instance_type = "t2.micro"
-  block_device_mappings {
-  device_name = "/dev/sda1"
 
-  ebs {
-    volume_size           = 20
-    volume_type           = "gp3"
-    delete_on_termination = true
+  block_device_mappings {
+    device_name = "/dev/sda1"
+
+    ebs {
+      volume_size           = 20
+      volume_type           = "gp3"
+      delete_on_termination = true
+    }
   }
-}
 
   network_interfaces {
     associate_public_ip_address = true
@@ -451,53 +453,88 @@ resource "aws_launch_template" "Pro-jenkins" {
     ]
   }
 
- user_data = base64encode(<<-EOF
-  #!/bin/bash
-  set -e
+  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    set -e
 
-  apt update -y
+    echo "===== Starting Jenkins installation ====="
 
-  apt install -y wget awscli fontconfig openjdk-21-jre docker.io unzip
+    echo "Updating packages..."
+    apt update -y
 
-  systemctl enable --now docker
+    echo "Installing required packages..."
+    apt install -y \
+      wget \
+      awscli \
+      fontconfig \
+      openjdk-21-jre \
+      docker.io \
+      unzip
 
-  mkdir -p /etc/apt/keyrings
+    echo "Starting Docker..."
+    systemctl enable --now docker
 
-  wget -O /etc/apt/keyrings/jenkins-keyring.asc \
-    https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+    echo "Adding Jenkins repository key..."
+    mkdir -p /etc/apt/keyrings
 
-  echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" \
-    > /etc/apt/sources.list.d/jenkins.list
+    wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+      https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
 
-  apt update -y
+    echo "Adding Jenkins repository..."
+    echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" \
+      > /etc/apt/sources.list.d/jenkins.list
 
-  apt install -y jenkins
+    echo "Updating package lists..."
+    apt update -y
 
-  # Install Terraform
-  TERRAFORM_VERSION="1.15.9"
+    echo "Installing Jenkins..."
+    apt install -y jenkins
 
-  wget -q \
-    "https://releases.hashicorp.com/terraform/$${TERRAFORM_VERSION}/terraform_$${TERRAFORM_VERSION}_linux_amd64.zip" \
-    -O /tmp/terraform.zip
+    echo "Installing Terraform..."
 
-  unzip -o /tmp/terraform.zip -d /usr/local/bin/
+    TERRAFORM_VERSION="1.15.9"
 
-  chmod +x /usr/local/bin/terraform
+    wget -q \
+      "https://releases.hashicorp.com/terraform/$${TERRAFORM_VERSION}/terraform_$${TERRAFORM_VERSION}_linux_amd64.zip" \
+      -O /tmp/terraform.zip
 
-  rm -f /tmp/terraform.zip
+    unzip -o /tmp/terraform.zip -d /usr/local/bin/
 
-  # Give Jenkins access to Docker
-  usermod -aG docker jenkins
+    chmod +x /usr/local/bin/terraform
 
-  systemctl enable jenkins
-  systemctl start jenkins
-  systemctl restart jenkins
+    rm -f /tmp/terraform.zip
 
-  terraform version
-  aws --version
-  docker --version
-EOF
-)
+    echo "Adding Jenkins user to Docker group..."
+    usermod -aG docker jenkins
+
+    echo "Enabling Jenkins..."
+    systemctl enable jenkins
+
+    echo "Starting Jenkins..."
+    systemctl start jenkins
+
+    echo "Restarting Jenkins..."
+    systemctl restart jenkins
+
+    echo "Checking installations..."
+    echo "===== Terraform ====="
+    terraform version
+
+    echo "===== AWS CLI ====="
+    aws --version
+
+    echo "===== Docker ====="
+    docker --version
+
+    echo "===== Java ====="
+    java -version
+
+    echo "===== Jenkins ====="
+    systemctl status jenkins --no-pager || true
+
+    echo "===== Jenkins installation completed ====="
+  EOF
+  )
 
   key_name = var.key-pair
 
@@ -505,6 +542,7 @@ EOF
     name = aws_iam_instance_profile.jenkins_profile.name
   }
 }
+
 
 resource "aws_autoscaling_group" "jenkins" {
   desired_capacity = 1
@@ -526,7 +564,7 @@ resource "aws_autoscaling_group" "jenkins" {
 }
 
 
-resource "aws_iam_role_policy_attachment" "jenkins_ssm" {
+ resource "aws_iam_role_policy_attachment" "jenkins_ssm" {
   role       = aws_iam_role.jenkins-role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
