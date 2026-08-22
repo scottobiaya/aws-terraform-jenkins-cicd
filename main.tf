@@ -449,33 +449,53 @@ resource "aws_launch_template" "Pro-jenkins" {
     ]
   }
 
-  user_data = base64encode(<<-EOF
-    #!/bin/bash
-    set -e
+ user_data = base64encode(<<-EOF
+  #!/bin/bash
+  set -e
 
-    apt update -y
+  apt update -y
 
-    
-    apt install -y wget awscli fontconfig openjdk-21-jre docker.io
+  apt install -y wget awscli fontconfig openjdk-21-jre docker.io unzip
 
-    mkdir -p /etc/apt/keyrings
+  systemctl enable --now docker
 
-    wget -O /etc/apt/keyrings/jenkins-keyring.asc \
-      https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+  mkdir -p /etc/apt/keyrings
 
-    echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" \
-      > /etc/apt/sources.list.d/jenkins.list
+  wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+    https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
 
-    apt update -y
+  echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" \
+    > /etc/apt/sources.list.d/jenkins.list
 
-    apt install -y jenkins
+  apt update -y
 
-    systemctl enable jenkins
-    systemctl start jenkins
-    sudo usermod -aG docker jenkins
-    systemctl restart jenkins
-  EOF
-  )
+  apt install -y jenkins
+
+  # Install Terraform
+  TERRAFORM_VERSION="1.15.9"
+
+  wget -q \
+    "https://releases.hashicorp.com/terraform/$${TERRAFORM_VERSION}/terraform_$${TERRAFORM_VERSION}_linux_amd64.zip" \
+    -O /tmp/terraform.zip
+
+  unzip -o /tmp/terraform.zip -d /usr/local/bin/
+
+  chmod +x /usr/local/bin/terraform
+
+  rm -f /tmp/terraform.zip
+
+  # Give Jenkins access to Docker
+  usermod -aG docker jenkins
+
+  systemctl enable jenkins
+  systemctl start jenkins
+  systemctl restart jenkins
+
+  terraform version
+  aws --version
+  docker --version
+EOF
+)
 
   key_name = var.key-pair
 

@@ -5,39 +5,38 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                checkout scm
+                git 'https://github.com/scottobiaya/new-project.git'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Terraform Init') {
             steps {
-                sh 'docker build -t scott-nginx-app ./app'
+                sh 'terraform init'
             }
         }
 
-        stage('Test Container') {
+        stage('Terraform Validate') {
             steps {
-                sh '''
-                    docker rm -f test-nginx 2>/dev/null || true
+                sh 'terraform validate'
+            }
+        }
 
-                    docker run -d \
-                      --name test-nginx \
-                      -p 8081:80 \
-                      scott-nginx-app
+        stage('Terraform Plan') {
+            steps {
+                sh 'terraform plan -out=tfplan'
+            }
+        }
 
-                    sleep 5
-
-                    curl -f http://localhost:8081/
-
-                    docker rm -f test-nginx
-                '''
+        stage('Terraform Apply') {
+            steps {
+                sh 'terraform apply -auto-approve tfplan'
             }
         }
     }
 
     post {
         always {
-            sh 'docker rm -f test-nginx 2>/dev/null || true'
+            archiveArtifacts artifacts: 'tfplan', allowEmptyArchive: true
         }
     }
 }
