@@ -220,34 +220,34 @@ resource "aws_autoscaling_group" "bar" {
   }
 }
 
-# resource "aws_iam_role" "jenkins-role" {
-#   name = "jenkins_role"
+resource "aws_iam_role" "jenkins-role" {
+  name = "jenkins_role"
 
-#   # Terraform's "jsonencode" function converts a
-#   # Terraform expression result to valid JSON syntax.
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Action = "sts:AssumeRole"
-#         Effect = "Allow"
-#         Sid    = ""
-#         Principal = {
-#           Service = "ec2.amazonaws.com"
-#         }
-#       },
-#     ]
-#   })
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression result to valid JSON syntax.
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      },
+    ]
+  })
 
-#   tags = {
-#     tag-key = "Pro-Jenkins"
-#   }
-# }
+  tags = {
+    Name = "Pro-Jenkins"
+  }
+}
 
-# resource "aws_iam_role_policy_attachment" "jenkins_admin" {
-#   role       = aws_iam_role.jenkins-role.name
-#   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-# }
+resource "aws_iam_role_policy_attachment" "jenkins_admin" {
+  role       = aws_iam_role.jenkins-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
 
 
 # resource "aws_iam_role_policy" "jenkins_ssm" {
@@ -274,10 +274,7 @@ resource "aws_autoscaling_group" "bar" {
 #   })
 # }
 
-# resource "aws_iam_instance_profile" "jenkins_profile" {
-#   name = "jenkin_profile"
-#   role = aws_iam_role.jenkins-role.name
-# }
+
 
 
 resource "aws_iam_role" "ec2-role" {
@@ -325,8 +322,8 @@ resource "aws_iam_role_policy" "ec2-policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "ssm" {
-role       = aws_iam_role.ec2-role.name
-policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  role       = aws_iam_role.ec2-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 resource "aws_iam_instance_profile" "ec2-profile" {
@@ -539,17 +536,16 @@ resource "aws_launch_template" "Pro-jenkins" {
   )
 
   key_name = var.key-pair
-  iam_instance_profile {
-  name = data.aws_iam_instance_profile.jenkins_profile.name
-}
 
- 
+  iam_instance_profile {
+    name = data.aws_iam_instance_profile.jenkins_profile.name
+  }
+
 }
 
 data "aws_iam_instance_profile" "jenkins_profile" {
   name = "jenkin_profile"
 }
-
 
 resource "aws_autoscaling_group" "jenkins" {
   desired_capacity = 1
@@ -571,3 +567,37 @@ resource "aws_autoscaling_group" "jenkins" {
 }
 
 
+
+# resource "aws_iam_instance_profile" "jenkins_profile" {
+#   name = "jenkin_profile"
+#   role = aws_iam_role.jenkins-role.name
+# }
+
+resource "aws_iam_role_policy" "jenkins_ssm" {
+  name = "jenkins-ssm-policy"
+  role = aws_iam_role.jenkins-role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [
+      {
+        Effect = "Allow"
+
+        Action = [
+          "ssm:SendCommand",
+          "ssm:GetCommandInvocation",
+          "ssm:ListCommandInvocations",
+          "ssm:DescribeInstanceInformation"
+        ]
+
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "jenkins_ssm" {
+  role       = aws_iam_role.jenkins-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
