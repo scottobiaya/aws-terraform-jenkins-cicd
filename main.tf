@@ -401,7 +401,7 @@ resource "aws_launch_template" "Pro-jenkins" {
       aws_security_group.jenkins-sg.id
     ]
   }
-user_data = base64encode(<<-EOF
+  user_data = base64encode(<<-EOF
   #!/bin/bash
   set -e
 
@@ -489,13 +489,13 @@ user_data = base64encode(<<-EOF
 
   echo "===== Jenkins installation completed ====="
 EOF
-)
+  )
 
-key_name = var.key-pair
+  key_name = var.key-pair
 
-iam_instance_profile {
-  name = aws_iam_instance_profile.jenkins_profile.name
-}
+  iam_instance_profile {
+    name = aws_iam_instance_profile.jenkins_profile.name
+  }
 }
 
 
