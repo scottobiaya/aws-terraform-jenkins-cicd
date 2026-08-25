@@ -493,9 +493,9 @@ EOF
 
   key_name = var.key-pair
 
-iam_instance_profile {
-  name = data.aws_iam_instance_profile.jenkins_profile.name
-}
+  iam_instance_profile {
+    name = data.aws_iam_instance_profile.jenkins_profile.name
+  }
 }
 
 
